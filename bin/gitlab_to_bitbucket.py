@@ -53,13 +53,16 @@ def main(argv=None):
                             Which is why it is 'life so cray cray basic'.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         conflict_handler='resolve')
-    #option_parser = OptionParser()
     parser.add_argument('-hau', '--host-alias', action='store_true',
-    #option_parser.add_option("-hau", "--host-alias",
                              dest="host_alias_use", default=False, required=False,
                              help="Flag indicating Use of Repository Storage Host Alias used for ssh clone operations \
                              Used to provide for multiple ssh host aliases. \
                              Optional.")
+    parser.add_argument('-fa', '--fetch-all', action='store_true',
+                             dest="fetch_all", default=False, required=False,
+                             help="Flag indicats the fetching of all GitLab projects which can take much longer and apear to stall the program \
+                             Used to provide for control over importing only the first page of projects or all projects \
+                             Semi-Required. Defaults to False.")
     #parser.add_argument('-P', '--page_size',
     #                    help='When retrieving result from GitLab, how many \
     #                          results should be included in a given page?.',
@@ -117,6 +120,7 @@ def main(argv=None):
     verbose = args.verbose
     tmp_path = "/tmp/gitlab_to_bitbucket_import_" + randomstring(64) + "/"
     token = args.token
+    gitlab_fetch_all_projects = args.fetch_all
     gitlab_instance_url = args.host_url
     default_host_name = args.host
     host_alias_use = args.host_alias_use
@@ -164,9 +168,14 @@ def main(argv=None):
     gl.auth()
 
     # Fetch all projects
-    # projects = gl.projects.owned(all=True)
-    # limited_projects = gl.projects.owned()
-    projects = gl.projects.owned()
+    if gitlab_fetch_all_projects == True:
+        if verbose >= 2:
+            print('Fetching all GitLab projects...', file=sys.stderr)
+       projects = gl.projects.owned(all=True)
+    else:
+        if verbose >= 2:
+            print('Fetching first page of GitLab projects...(limited)', file=sys.stderr)
+       projects = gl.projects.owned()
 
     if verbose >= 1:
         print('Processing GitLab projects...', file=sys.stderr)
@@ -226,28 +235,16 @@ def main(argv=None):
             else:
                 sh.git.bb("--description=" + proj_description, 'create')
 
-            #print(sh.git.remote("-v"))
-
             # Fix remote for Bitbucket to use host alias
             if use_host_alias == True:
                 cmd_fetch_submodule = "git remote -v|grep '" + bitbucket_host + "'|grep \(fetch\)| cut -f 2 | cut -d' ' -f1|tr -d '\n'"
                 p = Popen(cmd_fetch_submodule , shell=True, stdout=PIPE, stderr=PIPE)
+                # print("Return code: ", p.returncode)
                 destination_proj_ssh_url_to_repo, err = p.communicate()
-
-                #print("Return code: ", p.returncode)
-                #print(destination_proj_ssh_url_to_repo.rstrip())
-                #print(err.rstrip())
-                #destination_proj_ssh_url_to_repo = destination_proj_ssh_url_to_repo
                 destination_proj_ssh_url_to_repo = 'ssh://' + destination_proj_ssh_url_to_repo.decode('UTF-8').replace(bitbucket_host + ':', bitbucket_name + host_alias_prefix + project_owner_name + '/')
-                #git@bitbucket-as-ezpublishlegacyprojects/ezpublishlegacyprojects/youtube.git
-                #print(destination_proj_ssh_url_to_repo)
-                #print(destination_proj_ssh_url_to_repo)
-                #print(destination_proj_ssh_url_to_repo)
 
                 sh.git("remote", "remove", bitbucket_name)
                 sh.git.remote("add", bitbucket_name, destination_proj_ssh_url_to_repo)
-
-                # print(sh.git.remote("-v"))
 
             # Push content to bitbucket repository
             if verbose >= 1:
