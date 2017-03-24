@@ -138,6 +138,8 @@ Usage
 
 - http://seveas.github.io/git-spindle
 
+- http://python-gitlab.readthedocs.io/en/stable/
+
 
 Testing
 =====
