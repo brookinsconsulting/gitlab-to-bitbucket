@@ -5,15 +5,15 @@ A simple custom and basic solution to provide a command line tool which mirrors 
 
 This script depends heavily on existing tools and libraries to do most of the heavy lifting.
 
-Note: This solution is beta quality yet tested as functional.
+Note: This solution is stable and tested as functional.
 
 
 Version
 =======
 
-* The current version of GitLab to BitBucket is 0.1.1
+* The current version of GitLab to BitBucket is 0.1.2
 
-* Last Major update: March 22, 2017
+* Last Major update: March 24, 2017
 
 
 Copyright
@@ -108,15 +108,42 @@ Note: Do not share this file with anyone. Ever. Lest the daemons haunt you.
             user = <bitbucket-username>
             password = <bitbucket-password>
 
+## (Optional) SSH Host Aliases
 
-# Required specific directory strucuture
+If your like us we use this solution with multiple services, accounts, access tokens and ssh keys.
 
-- ~/bin/gitlab-to-bitbucket/tmp
+If your primary ssh key is not the right key you can fix this manually yourself *or* you can use the built in features of this script combined with ssh host aliases.
 
+Here is an example of runing the command with expectations of use of ssh host aliases which follow the following convention (host(with no 1st level domain, .com))-as-(username of gitlab and bitbucket). This script assumes the usernames are the same between the two services.
 
-# Required execution directory
+    fucker
 
-- ~/bin/gitlab-to-bitbucket
+Here is an example of our (redacted) ssh configuration of ssh host aliases.
+
+    Host github.com
+    #Host github-as-bc
+      HostName github.com
+      User git
+      IdentityFile /home/username/.ssh/id_rsa
+      IdentitiesOnly yes
+
+    Host github-as-ezpublishlegacy
+      HostName github.com
+      User git
+      IdentityFile /home/username/.ssh-ezpl/id_rsa
+      IdentitiesOnly yes
+
+    Host github-as-ezpublishlegacyprojects
+      HostName github.com
+      User git
+      IdentityFile /home/username/.ssh-ezplp/id_rsa
+      IdentitiesOnly yes
+
+    Host github-as-ezecosystem
+      HostName github.com
+      User git
+      IdentityFile /home/username/.ssh-eze/id_rsa
+      IdentitiesOnly yes
 
 
 ## Gitlab Access Requires
@@ -129,7 +156,26 @@ Usage
 
 ## Direct python execution, Required Parameters Only (Within interactive shell only)
 
-     ~/bin/gitlab-to-bitbucket/bin/gitlab_to_bitbucket.py --token=<github-personal-access-token-string> https://gitlab.com/ -v;
+     ~/bin/gitlab-to-bitbucket/bin/gitlab_to_bitbucket.py --token=<github-personal-access-token-string>
+
+
+## Direct python execution, Parameters required for most common use cases (Within interactive shell only)
+
+     ~/bin/gitlab-to-bitbucket/bin/gitlab_to_bitbucket.py --token=<github-personal-access-token-string> --fetch-all --page-size=100
+
+## Direct python execution, Parameters required for most common use cases using very verbose mode (Within interactive shell only)
+
+     ~/bin/gitlab-to-bitbucket/bin/gitlab_to_bitbucket.py --token=<github-personal-access-token-string> --fetch-all --page-size=100 -vv
+
+## Direct python execution, Parameters required for ssh host alias usage, second most common use cases using very verbose mode (Within interactive shell only)
+
+     ~/bin/gitlab-to-bitbucket/bin/gitlab_to_bitbucket.py --token=<github-personal-access-token-string> --fetch-all --host-alias --page-size=100 -vv
+
+## Direct python execution, Example usage with (most) script output logged to a temporary file
+
+     ~/bin/gitlab-to-bitbucket/bin/gitlab_to_bitbucket.py --token=<github-personal-access-token-string> --fetch-all --host-alias --page-size=100 -vv 2> /home/username/gitlab-to-bitbucket-mirroring-test-run-0001.txt
+
+*Note*: For longer runing usage (accounts with large numbers of project repositories and or large disk usage per repository) we *stronly* recommend only running our script within a GNU Screen Session (command: screen) which ensures the program (script) runs correctly in the event your ssh connection is interupted or terminated on accident.
 
 
 # Related Documentation
