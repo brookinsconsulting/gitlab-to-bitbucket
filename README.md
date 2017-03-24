@@ -140,6 +140,8 @@ Usage
 
 - http://python-gitlab.readthedocs.io/en/stable/
 
+- https://docs.gitlab.com/ee/api/README.html
+
 
 Testing
 =====
