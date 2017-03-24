@@ -13,6 +13,9 @@ Clone all projects from GitLab and recreate them on Bitbucket and push clone and
 :date: 03/22/2017
 '''
 
+################################################################################
+# Imports
+
 import sys
 import os
 import sh
@@ -29,10 +32,17 @@ from subprocess import Popen, PIPE
 #import re
 #import tempfile
 
-__version__ = '0.1.1'
+# Version
+__version__ = '0.1.2'
+
+################################################################################
+# Function: randomstring
 
 def randomstring(length):
    return ''.join(random.choice(string.digits + '_-' + string.ascii_lowercase) for i in range(length))
+
+################################################################################
+# Function: main
 
 def main(argv=None):
     '''
@@ -43,6 +53,8 @@ def main(argv=None):
                  If None, ``sys.argv[1:]`` is used instead.
     :type argv: list of str
     '''
+    ################################################################################
+    #
     # Get command line arguments
     parser = argparse.ArgumentParser(
         description="Transfer all projects/repositories from GitLab to Bitbucket. \
@@ -63,10 +75,11 @@ def main(argv=None):
                              help="Flag indicats the fetching of all GitLab projects which can take much longer and apear to stall the program \
                              Used to provide for control over importing only the first page of projects or all projects \
                              Semi-Required. Defaults to False.")
-    #parser.add_argument('-P', '--page_size',
-    #                    help='When retrieving result from GitLab, how many \
-    #                          results should be included in a given page?.',
-    #                    type=int, default=20)
+    parser.add_argument('-P', '--page_size',
+                        help='When retrieving result from GitLab, how many \
+                              results should be included in a given page? \
+                              Optional. Defaults to 20. Maximum is 100.',
+                        type=int, default=20)
     #parser.add_argument('-S', '--skip_existing',
     #                    help='Do not update existing repositories and just \
     #                          skip them.',
@@ -103,9 +116,11 @@ def main(argv=None):
     parser.add_argument('--version', action='version',
                         version='%(prog)s {0}'.format(__version__))
 
+    ################################################################################
+    #
+
+    # Parse command line arguments
     args = parser.parse_args(argv)
-    # (options, args) = parser.parse_args()
-    # args.page_size = max(100, args.page_size)
 
     # Convert verbose flag to actually logging level
     log_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
@@ -116,11 +131,15 @@ def main(argv=None):
     logging.basicConfig(format=('%(asctime)s - %(name)s - %(levelname)s - ' +
                                 '%(message)s'), level=log_level)
 
+    ################################################################################
+    #
+
     # Define Default Parameters
     verbose = args.verbose
     tmp_path = "/tmp/gitlab_to_bitbucket_import_" + randomstring(64) + "/"
     token = args.token
     gitlab_fetch_all_projects = args.fetch_all
+    gitlab_page_item_count = max(100, args.page_size)
     gitlab_instance_url = args.host_url
     default_host_name = args.host
     host_alias_use = args.host_alias_use
@@ -128,6 +147,9 @@ def main(argv=None):
     gitlab_name = 'gitlab'
     bitbucket_name = 'bitbucket'
     bitbucket_host = bitbucket_name + '.org'
+
+    ################################################################################
+    #
 
     # Test for default parameters
     if default_host_name == None:
@@ -154,8 +176,14 @@ def main(argv=None):
     elif use_host_alias == False and host_alias_prefix != None:
         use_host_alias = False
 
+    ################################################################################
+    #
+
     # Create temporary directory
     sh.mkdir(tmp_path)
+
+    ################################################################################
+    #
 
     # Authenticate with GitLab instance using private token
     if args.token:
@@ -167,19 +195,25 @@ def main(argv=None):
     # This is mandatory if you use the username/password authentication.
     gl.auth()
 
+    ################################################################################
+    #
+
     # Fetch all projects
     if gitlab_fetch_all_projects == True:
         if verbose >= 2:
             print('Fetching all GitLab projects...', file=sys.stderr)
-        projects = gl.projects.owned(all=True)
+        projects = gl.projects.owned(all=True, per_page=gitlab_page_item_count)
     else:
         if verbose >= 2:
             print('Fetching first page of GitLab projects...(limited)', file=sys.stderr)
-        projects = gl.projects.owned()
+        projects = gl.projects.owned(page=1, per_page=gitlab_page_item_count)
 
     if verbose >= 1:
         print('Processing GitLab projects...', file=sys.stderr)
     sys.stderr.flush()
+
+    ################################################################################
+    #
 
     # Iterate over gitlab list of projects / repositories
     for project in projects:
@@ -203,6 +237,9 @@ def main(argv=None):
 
         if verbose >= 0:
             print("Processing: " + proj_name)
+
+        ################################################################################
+        #
 
         # Clone repository in temporary directory
         if not os.path.exists(tmp_proj_path):
@@ -228,6 +265,9 @@ def main(argv=None):
         if verbose >= 1:
             print(sh.pwd())
 
+        ################################################################################
+        #
+
         # Create Bitbucket repository
         try:
             if proj_repo_visibility == "0":
@@ -245,6 +285,9 @@ def main(argv=None):
 
                 sh.git("remote", "remove", bitbucket_name)
                 sh.git.remote("add", bitbucket_name, destination_proj_ssh_url_to_repo)
+
+            ################################################################################
+            #
 
             # Push content to bitbucket repository
             if verbose >= 1:
@@ -265,12 +308,18 @@ def main(argv=None):
 
         sh.cd('../')
 
+        ################################################################################
+        #
+
         # Disk Temporary Files Cleanup : Remove repository checkout
         sh.rm("--recursive", "--force", proj_name)
 
         sh.cd('../')
         if verbose >= 1:
             print(sh.pwd())
+
+    ################################################################################
+    #
 
     # Disk Temporary Directory Removal
     sh.rm("--recursive", "--force", tmp_path)
@@ -280,8 +329,12 @@ def main(argv=None):
 
     print("Import completed")
 
-# execute program main
+################################################################################
+#
+
+# Execute program main
 if __name__ == '__main__':
     main()
 
+################################################################################
 # fin
