@@ -171,11 +171,11 @@ def main(argv=None):
     if gitlab_fetch_all_projects == True:
         if verbose >= 2:
             print('Fetching all GitLab projects...', file=sys.stderr)
-       projects = gl.projects.owned(all=True)
+        projects = gl.projects.owned(all=True)
     else:
         if verbose >= 2:
             print('Fetching first page of GitLab projects...(limited)', file=sys.stderr)
-       projects = gl.projects.owned()
+        projects = gl.projects.owned()
 
     if verbose >= 1:
         print('Processing GitLab projects...', file=sys.stderr)
