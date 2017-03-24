@@ -95,6 +95,10 @@ GitSpindle provides for a configuration dot file ~/.gitspindle in INI file forma
 
 You must create this file and populate it with the following. Customize it's contents to contain your actual BitBucket username and password.
 
+This limited file format does not apear to support multiple accounts at the time of writting. We stored and manually uncommented our accounts + passwords as needed.
+
+Please *remember* to switch this information or you may corrupt / cross polute your accounts when working with multiple accounts. This is a real bottle neck for users with multiple accounts at this time.
+
 Note: Do not share this file with anyone. Ever. Lest the daemons haunt you.
 
 
