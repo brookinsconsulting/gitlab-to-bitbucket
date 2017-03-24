@@ -75,7 +75,7 @@ def main(argv=None):
                              help="Flag indicats the fetching of all GitLab projects which can take much longer and apear to stall the program \
                              Used to provide for control over importing only the first page of projects or all projects \
                              Semi-Required. Defaults to False.")
-    parser.add_argument('-P', '--page_size',
+    parser.add_argument('-P', '--page-size',
                         help='When retrieving result from GitLab, how many \
                               results should be included in a given page? \
                               Optional. Defaults to 20. Maximum is 100.',
