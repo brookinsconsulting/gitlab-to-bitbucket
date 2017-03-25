@@ -151,6 +151,13 @@ Here is an example of our (redacted) ssh configuration of ssh host aliases.
 - GitLab Account, Personal Access Token
 - BitBucket, Username and Password
 
+## Note: Bitbucket repository urls are forced to be lower case only
+
+Due to long standing limitations of the bitbucket.org platform all repository urls, repository names (slugs) (somereponame.git) must be lower case only.
+
+This specifically affects a repository's directory name and git remote repository name
+
+
 Usage
 =====
 
