@@ -66,7 +66,7 @@ def main(argv=None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         conflict_handler='resolve')
     parser.add_argument('-hau', '--host-alias', action='store_true',
-                             dest="host_alias_use", default=False, required=False,
+                             dest="use_host_alias", default=False, required=False,
                              help="Flag indicating Use of Repository Storage Host Alias used for ssh clone operations \
                              Used to provide for multiple ssh host aliases. \
                              Optional.")
@@ -142,11 +142,12 @@ def main(argv=None):
     gitlab_page_item_count = max(100, args.page_size)
     gitlab_instance_url = args.host_url
     default_host_name = args.host
-    host_alias_use = args.host_alias_use
+    use_host_alias = args.use_host_alias
     host_alias_prefix = args.host_alias_prefix
     gitlab_name = 'gitlab'
     bitbucket_name = 'bitbucket'
     bitbucket_host = bitbucket_name + '.org'
+    lower_case_clone_dir = True
 
     ################################################################################
     #
@@ -163,11 +164,6 @@ def main(argv=None):
     else:
         if verbose >= 2:
             print('Using gitlab instance url: ' + gitlab_instance_url)
-
-    if host_alias_use == None:
-        use_host_alias = False
-    else:
-        use_host_alias = True
 
     if use_host_alias == True and host_alias_prefix == None:
         host_alias_prefix = '-as-'
@@ -201,15 +197,15 @@ def main(argv=None):
     # Fetch all projects
     if gitlab_fetch_all_projects == True:
         if verbose >= 2:
-            print('Fetching all GitLab projects...', file=sys.stderr)
+            print('Fetching all GitLab projects at once ...', file=sys.stderr)
         projects = gl.projects.owned(all=True, per_page=gitlab_page_item_count)
     else:
         if verbose >= 2:
-            print('Fetching first page of GitLab projects...(limited)', file=sys.stderr)
+            print('Fetching first page of GitLab projects ...', file=sys.stderr)
         projects = gl.projects.owned(page=1, per_page=gitlab_page_item_count)
 
     if verbose >= 1:
-        print('Processing GitLab projects...', file=sys.stderr)
+        print('Processing GitLab projects ...', file=sys.stderr)
     sys.stderr.flush()
 
     ################################################################################
@@ -223,11 +219,17 @@ def main(argv=None):
 
         # Project repository information
         proj_name = project.name
-        tmp_proj_path = tmp_path + proj_name
+        proj_name_lower_case = proj_name.lower()
         proj_description = project.description
         proj_repo_visibility = project.visibility_level
         proj_ssh_url_to_repo = project.ssh_url_to_repo
         project_owner_name = project.owner.username
+
+        # Lower case dir - psudo feature
+        if lower_case_clone_dir == True:
+           tmp_proj_path = tmp_path + proj_name_lower_case
+        else:
+           tmp_proj_path = tmp_path + proj_name
 
         if proj_description == None:
             proj_description = ''
@@ -250,7 +252,19 @@ def main(argv=None):
                 print(sh.pwd())
 
             sh.cd(tmp_path)
-            sh.git.clone(proj_ssh_url_to_repo)
+
+            # Lower case dir - psudo feature
+            if lower_case_clone_dir == True:
+               repo_name_mixed_case_cmd = "echo " + proj_ssh_url_to_repo + "|cut -d '/' -f 2|sed 's/\.git//'|tr -d '\n'"
+               rnp = Popen(repo_name_mixed_case_cmd , shell=True, stdout=PIPE, stderr=PIPE)
+               # print("Return code: ", rnp.returncode)
+               return_repo_name_mixed_case, rnp_err = rnp.communicate()
+               repo_name_lower_case = return_repo_name_mixed_case.lower()
+               repo_file_name_lower_case = repo_name_lower_case
+
+               sh.git.clone(proj_ssh_url_to_repo, repo_file_name_lower_case)
+            else:
+               sh.git.clone(proj_ssh_url_to_repo)
 
             if verbose >= 2:
                 print("Clone completed")
@@ -271,6 +285,7 @@ def main(argv=None):
         # Create Bitbucket repository
         try:
             if proj_repo_visibility == "0":
+                # sh.git.bb("--slug=" + proj_name_lower_case + " --private --description=" + proj_description, 'create')
                 sh.git.bb("--private --description=" + proj_description, 'create')
             else:
                 sh.git.bb("--description=" + proj_description, 'create')
