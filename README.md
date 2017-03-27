@@ -5,13 +5,15 @@ A simple custom and basic solution to provide a command line tool which mirrors 
 
 This script depends heavily on existing tools and libraries to do most of the heavy lifting.
 
+This script is also inefficient when run multiple times. This is a result of it's short life span thus far and as a result to rely on git-spindle instead a more complete native python bitbucket.org rest api implementation.
+
 Note: This solution is stable and tested as functional.
 
 
 Version
 =======
 
-* The current version of GitLab to BitBucket is 0.1.2
+* The current version of GitLab to BitBucket is 0.1.3
 
 * Last Major update: March 24, 2017
 
@@ -66,7 +68,6 @@ The following requirements exists for using GitLab to BitBucket script:
 - Python Library: sh
 - Python Library: python-gitlab
 - Python Library: git-spindle
-
 
 # Required software
 
@@ -157,9 +158,15 @@ Due to long standing limitations of the bitbucket.org platform all repository ur
 
 This specifically affects a repository's directory name and git remote repository name
 
+Issue: https://bitbucket.org/site/master/issues/3348/allow-uppercase-characters-in-repo-slugs
+
 
 Usage
 =====
+
+The script gitlab_to_bitbucket.py accepts many parameters to make your life easier. Please study the '--help' program output.
+
+    ~/bin/gitlab-to-bitbucket/bin/gitlab_to_bitbucket.py --help;
 
 ## Direct python execution, Required Parameters Only (Within interactive shell only)
 
